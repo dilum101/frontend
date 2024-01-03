@@ -23,7 +23,11 @@ const Home = () => {
         minW={{ base: 'unset', lg: '900px' }}
         data-label="hero plate"
       >
-        <Flex mb={{ base: 6, lg: 8 }} justifyContent="space-between" alignItems="center">
+        <Flex
+          mb={{ base: 6, lg: 8 }}
+          justifyContent="space-between"
+          alignItems="center"
+        >
           <Heading
             as="h1"
             size={{ base: 'md', lg: 'xl' }}
@@ -34,17 +38,35 @@ const Home = () => {
             { config.chain.name } explorer
           </Heading>
           <Box display={{ base: 'none', lg: 'flex' }}>
-            { config.features.account.isEnabled && <ProfileMenuDesktop isHomePage/> }
-            { config.features.blockchainInteraction.isEnabled && <WalletMenuDesktop isHomePage/> }
+            { config.features.account.isEnabled && (
+              <ProfileMenuDesktop isHomePage/>
+            ) }
+            { config.features.blockchainInteraction.isEnabled && (
+              <WalletMenuDesktop isHomePage/>
+            ) }
           </Box>
         </Flex>
         <SearchBar isHomepage/>
       </Box>
       <Stats/>
       <ChainIndicators/>
-      <AdBanner mt={{ base: 6, lg: 8 }} mx="auto" display="flex" justifyContent="center"/>
-      <Flex mt={ 8 } direction={{ base: 'column', lg: 'row' }} columnGap={ 12 } rowGap={ 8 }>
-        { config.features.zkEvmRollup.isEnabled ? <LatestZkEvmL2Batches/> : <LatestBlocks/> }
+      <AdBanner
+        mt={{ base: 6, lg: 8 }}
+        mx="auto"
+        display="flex"
+        justifyContent="center"
+      />
+      <Flex
+        mt={ 8 }
+        direction={{ base: 'column', lg: 'row' }}
+        columnGap={ 12 }
+        rowGap={ 8 }
+      >
+        { config.features.zkEvmRollup.isEnabled ? (
+          <LatestZkEvmL2Batches/>
+        ) : (
+          <LatestBlocks/>
+        ) }
         <Box flexGrow={ 1 }>
           <Transactions/>
         </Box>

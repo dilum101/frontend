@@ -1,28 +1,24 @@
-import React from 'react';
+import React from "react";
 
-import type { NextPageWithLayout } from 'nextjs/types';
+import type { NextPageWithLayout } from "nextjs/types";
 
-import PageNextJs from 'nextjs/PageNextJs';
+import PageNextJs from "nextjs/PageNextJs";
 
-import Home from 'ui/pages/Home';
-import LayoutHome from 'ui/shared/layout/LayoutHome';
+import Home from "ui/pages/Home";
+import LayoutHome from "ui/shared/layout/LayoutHome";
 
 const Page: NextPageWithLayout = () => {
   return (
     <PageNextJs pathname="/">
-      <Home/>
+      <Home />
     </PageNextJs>
   );
 };
 
 Page.getLayout = function getLayout(page: React.ReactElement) {
-  return (
-    <LayoutHome>
-      { page }
-    </LayoutHome>
-  );
+  return <LayoutHome>{page}</LayoutHome>;
 };
 
 export default Page;
 
-export { base as getServerSideProps } from 'nextjs/getServerSideProps';
+export { base as getServerSideProps } from "nextjs/getServerSideProps";

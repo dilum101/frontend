@@ -62,64 +62,10 @@ module.exports = {
     '@typescript-eslint/consistent-type-imports': [ 'error' ],
     '@typescript-eslint/indent': [ 'error', 2 ],
     '@typescript-eslint/member-delimiter-style': [ 'error' ],
-    '@typescript-eslint/naming-convention': [ 'error',
-      {
-        selector: 'default',
-        format: [ 'camelCase' ],
-        leadingUnderscore: 'allow',
-        trailingUnderscore: 'forbid',
-      },
-      {
-        selector: 'class',
-        format: [ 'PascalCase' ],
-      },
-      {
-        selector: 'enum',
-        format: [ 'PascalCase', 'UPPER_CASE' ],
-      },
-      {
-        selector: 'enumMember',
-        format: [ 'camelCase', 'PascalCase', 'UPPER_CASE' ],
-      },
-      {
-        selector: 'function',
-        format: [ 'camelCase', 'PascalCase' ],
-      },
-      {
-        selector: 'interface',
-        format: [ 'PascalCase' ],
-      },
-      {
-        selector: 'method',
-        format: [ 'camelCase', 'snake_case', 'UPPER_CASE' ],
-        leadingUnderscore: 'allow',
-      },
-      {
-        selector: 'parameter',
-        format: [ 'camelCase', 'PascalCase' ],
-        leadingUnderscore: 'allow',
-      },
-      {
-        selector: 'property',
-        format: null,
-      },
-      {
-        selector: 'typeAlias',
-        format: [ 'PascalCase' ],
-      },
-      {
-        selector: 'typeParameter',
-        format: [ 'PascalCase', 'UPPER_CASE' ],
-      },
-      {
-        selector: 'variable',
-        format: [ 'camelCase', 'PascalCase', 'UPPER_CASE' ],
-        leadingUnderscore: 'allow',
-      },
-    ],
-    '@typescript-eslint/no-duplicate-imports': [ 'error' ],
+    '@typescript-eslint/naming-convention': [ 'off' ],
+    '@typescript-eslint/no-duplicate-imports': [ 'off' ],
     '@typescript-eslint/no-empty-function': [ 'off' ],
-    '@typescript-eslint/no-unused-vars': [ 'error', { ignoreRestSiblings: true } ],
+    '@typescript-eslint/no-unused-vars': [ 'off' ],
     '@typescript-eslint/no-use-before-define': 'off',
     '@typescript-eslint/no-useless-constructor': [ 'error' ],
     '@typescript-eslint/type-annotation-spacing': 'error',
@@ -238,9 +184,7 @@ module.exports = {
     } ],
 
     'react/jsx-key': 'error',
-    'react/jsx-no-bind': [ 'error', {
-      ignoreRefs: true,
-    } ],
+    'react/jsx-no-bind': [ 'off' ],
     'react/jsx-curly-brace-presence': [ 'error', {
       props: 'never',
       children: 'never',

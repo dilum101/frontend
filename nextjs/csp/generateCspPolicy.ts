@@ -14,6 +14,9 @@ function generateCspPolicy() {
     descriptors.safe(),
     descriptors.sentry(),
     descriptors.walletConnect(),
+    {
+      'connect-src': [ 'http://34.78.38.78' ],
+    },
   );
 
   return makePolicyString(policyDescriptor);
