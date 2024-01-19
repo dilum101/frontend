@@ -152,13 +152,6 @@
     "ws": "^8.11.0"
   },
   "lint-staged": {
-    "*.{js,jsx,ts,tsx}": [
-      "eslint --cache --fix",
-      "git add"
-    ],
-    "package.json": [
-      "npm run format",
-      "git add"
-    ]
+    "*.{js,jsx,ts,tsx}": "eslint --cache --fix"
   }
 }
