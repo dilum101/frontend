@@ -109,7 +109,11 @@ function MyApp({ Component, pageProps }: AppPropsWithLayout) {
                   <SocketProvider
                     url={`${config.api.socket}${config.api.basePath}/socket/v2`}
                   >
-                    {getLayout(<Component {...pageProps} />)}
+                    {isAuthenticated ? (
+                      getLayout(<Component {...pageProps} />)
+                    ) : (
+                      <Login expired={jwtExpired} onLogin={handleLogin} />
+                    )}
                   </SocketProvider>
                 </ScrollDirectionProvider>
                 <ReactQueryDevtools
