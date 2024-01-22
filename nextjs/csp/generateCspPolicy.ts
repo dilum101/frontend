@@ -1,5 +1,5 @@
-import * as descriptors from './policies';
-import { makePolicyString, mergeDescriptors } from './utils';
+import * as descriptors from "./policies";
+import { makePolicyString, mergeDescriptors } from "./utils";
 
 function generateCspPolicy() {
   const policyDescriptor = mergeDescriptors(
@@ -15,8 +15,8 @@ function generateCspPolicy() {
     descriptors.sentry(),
     descriptors.walletConnect(),
     {
-      'connect-src': [ 'http://34.78.38.78' ],
-    },
+      "connect-src": ["http://34.147.245.212:4000"],
+    }
   );
 
   return makePolicyString(policyDescriptor);

@@ -32,14 +32,17 @@ const Login: React.FC<LoginProps> = ({ onLogin, expired }) => {
   ) => {
     try {
       const { email, password } = values;
+
       setIsLoading(true);
-      const response = await fetch("http://34.78.38.78/api/v1/auth/signin", {
+      const apiURL = process.env.NEXT_PUBLIC_BASE_API + "/login";
+
+      const response = await fetch(apiURL, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          email,
+          username: email,
           password,
         }),
       });
@@ -48,6 +51,8 @@ const Login: React.FC<LoginProps> = ({ onLogin, expired }) => {
         const data: any = await response.json();
         const JwtToken = data.token;
         sessionStorage.setItem("JwtToken", JwtToken);
+        sessionStorage.setItem("role", data.role);
+        sessionStorage.setItem("vaultId", data.vaultId);
 
         onLogin();
       } else {

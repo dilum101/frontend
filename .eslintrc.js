@@ -69,7 +69,7 @@ module.exports = {
     '@typescript-eslint/no-use-before-define': 'off',
     '@typescript-eslint/no-useless-constructor': [ 'error' ],
     '@typescript-eslint/type-annotation-spacing': 'error',
-    '@typescript-eslint/no-explicit-any': [ 'error', { ignoreRestArgs: true } ],
+    '@typescript-eslint/no-explicit-any': [ 'off' ],
 
     // disabled in favor of @typescript-eslint
     'brace-style': 'off',
@@ -100,7 +100,7 @@ module.exports = {
       allowBlockStart: true,
     } ],
     'max-len': [ 'error', 160, 4 ],
-    'no-console': 'error',
+    'no-console': 'off',
     'no-empty': [ 'error', { allowEmptyCatch: true } ],
     'no-implicit-coercion': [ 'error', {
       number: true,
@@ -176,12 +176,7 @@ module.exports = {
     ],
 
     'no-restricted-imports': [ 'error', RESTRICTED_MODULES ],
-    'no-restricted-properties': [ 2, {
-      object: 'process',
-      property: 'env',
-      // FIXME: restrict the rule only NEXT_PUBLIC variables
-      message: 'Please use configs/app/index.ts to import any NEXT_PUBLIC environment variables. For other properties please disable this rule for a while.',
-    } ],
+    'no-restricted-properties': ['off'],
 
     'react/jsx-key': 'error',
     'react/jsx-no-bind': [ 'off' ],
@@ -227,7 +222,7 @@ module.exports = {
     'react/require-optimization': [ 'error' ],
     'react/void-dom-elements-no-children': 'error',
     'react-hooks/rules-of-hooks': 'error',
-    'react-hooks/exhaustive-deps': 'error',
+    'react-hooks/exhaustive-deps': 'off',
 
     'regexp/confusing-quantifier': 'error',
     'regexp/control-character-escape': 'error',

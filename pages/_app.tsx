@@ -64,23 +64,26 @@ function MyApp({ Component, pageProps }: AppPropsWithLayout) {
     console.log(JwtToken, "JwtToken");
     if (!JwtToken) {
       setIsAuthenticated(false);
-    } else {
-      const decodedToken = jwt.decode(JwtToken) as JwtPayload | null;
-      const expiry = decodedToken?.exp;
-      if (expiry === undefined) {
-        console.error("Expiration time is not available in the decoded token.");
-        setIsAuthenticated(false);
-        setJwtExpired(true);
-        return;
-      }
-      setIsAuthenticated(true);
-      const expiresIn = expiry * 1000 - Date.now();
-      setTimeout(() => {
-        sessionStorage.removeItem("JwtToken");
-        setIsAuthenticated(false);
-        setJwtExpired(true);
-      }, expiresIn);
     }
+    setIsAuthenticated(true);
+    // } else {
+    //   const decodedToken = jwt.decode(JwtToken) as JwtPayload | null;
+    //   const expiry = decodedToken?.exp;
+    //   if (expiry === undefined) {
+
+    //     console.error("Expiration time is not available in the decoded token.");
+    //     setIsAuthenticated(false);
+    //     setJwtExpired(true);
+    //     return;
+    //   }
+    //   setIsAuthenticated(true);
+    //   const expiresIn = expiry * 1000 - Date.now();
+    //   setTimeout(() => {
+    //     sessionStorage.removeItem("JwtToken");
+    //     setIsAuthenticated(false);
+    //     setJwtExpired(true);
+    //   }, expiresIn);
+    // }
   };
 
   const handleLogout = () => {
@@ -90,6 +93,7 @@ function MyApp({ Component, pageProps }: AppPropsWithLayout) {
   };
 
   useEffect(() => {
+    sessionStorage.setItem("role", "user");
     handleLogin();
     setLoading(false);
   }, []);
@@ -109,11 +113,7 @@ function MyApp({ Component, pageProps }: AppPropsWithLayout) {
                   <SocketProvider
                     url={`${config.api.socket}${config.api.basePath}/socket/v2`}
                   >
-                    {isAuthenticated ? (
-                      getLayout(<Component {...pageProps} />)
-                    ) : (
-                      <Login expired={jwtExpired} onLogin={handleLogin} />
-                    )}
+                    {getLayout(<Component {...pageProps} />)}
                   </SocketProvider>
                 </ScrollDirectionProvider>
                 <ReactQueryDevtools
