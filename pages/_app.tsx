@@ -64,26 +64,25 @@ function MyApp({ Component, pageProps }: AppPropsWithLayout) {
     console.log(JwtToken, "JwtToken");
     if (!JwtToken) {
       setIsAuthenticated(false);
-    }
-    setIsAuthenticated(true);
-    // } else {
-    //   const decodedToken = jwt.decode(JwtToken) as JwtPayload | null;
-    //   const expiry = decodedToken?.exp;
-    //   if (expiry === undefined) {
+    } else {
+      // const decodedToken = jwt.decode(JwtToken) as JwtPayload | null;
+      //const expiry = decodedToken?.exp;
+      // if (expiry === undefined) {
+      //   console.error("Expiration time is not available in the decoded token.");
+      //   setIsAuthenticated(false);
+      //   setJwtExpired(true);
+      //   return;
+      // }
+      setIsAuthenticated(true);
 
-    //     console.error("Expiration time is not available in the decoded token.");
-    //     setIsAuthenticated(false);
-    //     setJwtExpired(true);
-    //     return;
-    //   }
-    //   setIsAuthenticated(true);
-    //   const expiresIn = expiry * 1000 - Date.now();
-    //   setTimeout(() => {
-    //     sessionStorage.removeItem("JwtToken");
-    //     setIsAuthenticated(false);
-    //     setJwtExpired(true);
-    //   }, expiresIn);
-    // }
+      //const expiresIn = expiry * 1000 - Date.now();
+      const expiresIn = 60 * 10 * 1000;
+      setTimeout(() => {
+        sessionStorage.removeItem("JwtToken");
+        setIsAuthenticated(false);
+        setJwtExpired(true);
+      }, expiresIn);
+    }
   };
 
   const handleLogout = () => {

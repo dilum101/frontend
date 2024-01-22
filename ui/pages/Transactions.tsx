@@ -54,14 +54,8 @@ const Transactions = () => {
 
           if (response.ok) {
             const unparsedResponse: any = await response.json();
-            //console.log(unparsedResponse.address[0]);
 
-            // setAssetAddresses(parsedResponse.address);
-
-            setAssetAddresses((prevAddresses) => [
-              "0x3213F0492925F2688Ccc4f28543cA44fb2221881",
-              "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
-            ]);
+            setAssetAddresses((prevAddresses) => [...unparsedResponse.address]);
           } else {
             console.error("Response Failed.." + response.json());
           }
@@ -72,7 +66,6 @@ const Transactions = () => {
       }
     };
     fetchAssetAddresses();
-    console.log(assetAddresses, "tem.from.hash");
   }, []);
   const verifiedTitle =
     config.chain.verificationType === "validation" ? "Validated" : "Mined";

@@ -15,7 +15,7 @@ function generateCspPolicy() {
     descriptors.sentry(),
     descriptors.walletConnect(),
     {
-      "connect-src": ["http://34.147.245.212:4000"],
+      "connect-src": [process.env.NEXT_PUBLIC_BASE_API as string],
     }
   );
 
