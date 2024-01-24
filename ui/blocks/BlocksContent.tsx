@@ -31,46 +31,65 @@ const BlocksContent = ({ type, query }: Props) => {
 
   const [ newItemsCount, setNewItemsCount ] = React.useState(0);
 
-  const handleNewBlockMessage: SocketMessage.NewBlock['handler'] = React.useCallback((payload) => {
-    const queryKey = getResourceKey('blocks', { queryParams: { type } });
+  const handleNewBlockMessage: SocketMessage.NewBlock['handler'] =
+    React.useCallback(
+      (payload) => {
+        const queryKey = getResourceKey('blocks', { queryParams: { type } });
 
-    queryClient.setQueryData(queryKey, (prevData: BlocksResponse | undefined) => {
-      const shouldAddToList = !type || type === payload.block.type;
+        queryClient.setQueryData(
+          queryKey,
+          (prevData: BlocksResponse | undefined) => {
+            const shouldAddToList = !type || type === payload.block.type;
 
-      if (!prevData) {
-        return {
-          items: shouldAddToList ? [ payload.block ] : [],
-          next_page_params: null,
-        };
-      }
+            if (!prevData) {
+              return {
+                items: shouldAddToList ? [ payload.block ] : [],
+                next_page_params: null,
+              };
+            }
 
-      if (!shouldAddToList || prevData.items.some((block => block.height === payload.block.height))) {
-        return prevData;
-      }
+            if (
+              !shouldAddToList ||
+              prevData.items.some(
+                (block) => block.height === payload.block.height,
+              )
+            ) {
+              return prevData;
+            }
 
-      if (prevData.items.length >= OVERLOAD_COUNT) {
-        setNewItemsCount(prev => prev + 1);
-        return prevData;
-      }
+            if (prevData.items.length >= OVERLOAD_COUNT) {
+              setNewItemsCount((prev) => prev + 1);
+              return prevData;
+            }
 
-      const newItems = [ payload.block, ...prevData.items ].sort((b1, b2) => b2.height - b1.height);
-      return { ...prevData, items: newItems };
-    });
-  }, [ queryClient, type ]);
+            const newItems = [ payload.block, ...prevData.items ].sort(
+              (b1, b2) => b2.height - b1.height,
+            );
+            return { ...prevData, items: newItems };
+          },
+        );
+      },
+      [ queryClient, type ],
+    );
 
   const handleSocketClose = React.useCallback(() => {
-    setSocketAlert('Connection is lost. Please refresh the page to load new blocks.');
+    setSocketAlert(
+      'Connection is lost. Please refresh the page to load new blocks.',
+    );
   }, []);
 
   const handleSocketError = React.useCallback(() => {
-    setSocketAlert('An error has occurred while fetching new blocks. Please refresh the page to load new blocks.');
+    setSocketAlert(
+      'An error has occurred while fetching new blocks. Please refresh the page to load new blocks.',
+    );
   }, []);
 
   const channel = useSocketChannel({
     topic: 'blocks:new_block',
     onSocketClose: handleSocketClose,
     onSocketError: handleSocketError,
-    isDisabled: query.isPlaceholderData || query.isError || query.pagination.page !== 1,
+    isDisabled:
+      query.isPlaceholderData || query.isError || query.pagination.page !== 1,
   });
   useSocketMessage({
     channel,
@@ -90,7 +109,11 @@ const BlocksContent = ({ type, query }: Props) => {
             isLoading={ query.isPlaceholderData }
           />
         ) }
-        <BlocksList data={ query.data.items } isLoading={ query.isPlaceholderData } page={ query.pagination.page }/>
+        <BlocksList
+          data={ query.data.items }
+          isLoading={ query.isPlaceholderData }
+          page={ query.pagination.page }
+        />
       </Box>
       <Box display={{ base: 'none', lg: 'block' }}>
         <BlocksTable
@@ -106,11 +129,12 @@ const BlocksContent = ({ type, query }: Props) => {
     </>
   ) : null;
 
-  const actionBar = isMobile && query.pagination.isVisible ? (
-    <ActionBar mt={ -6 }>
-      <Pagination ml="auto" { ...query.pagination }/>
-    </ActionBar>
-  ) : null;
+  const actionBar =
+    isMobile && query.pagination.isVisible ? (
+      <ActionBar mt={ -6 }>
+        <Pagination ml="auto" { ...query.pagination }/>
+      </ActionBar>
+    ) : null;
 
   return (
     <DataListDisplay

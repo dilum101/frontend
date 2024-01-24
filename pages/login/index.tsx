@@ -9,6 +9,7 @@ import {
   FormHelperText,
 } from "@chakra-ui/react";
 import { Field, Form, Formik, FormikHelpers } from "formik";
+import router from "next/router";
 
 type LoginFormValues = {
   email: string;
@@ -54,7 +55,40 @@ const Login: React.FC<LoginProps> = ({ onLogin, expired }) => {
         sessionStorage.setItem("role", data.role);
         sessionStorage.setItem("vaultId", data.vaultId);
 
-        onLogin();
+        const assetId = process.env.NEXT_PUBLIC_ASSET_ID;
+
+        const apiURL = process.env.NEXT_PUBLIC_BASE_API + "/getAssets";
+
+        try {
+          if (!apiURL || !data?.vaultId || !assetId) {
+            console.error("CALLING GET ASSET HAS BEEN CANCLED");
+          } else {
+            const response = await fetch(apiURL, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${JwtToken}`,
+              },
+              body: JSON.stringify({
+                assetId,
+                vaultId: parseInt(data?.vaultId),
+              }),
+            });
+
+            if (response.ok) {
+              const unparsedResponse: any = await response.json();
+              sessionStorage.setItem(
+                "asset_addresses",
+                unparsedResponse.address
+              );
+              onLogin();
+            } else {
+              console.error("Response Failed.." + response.json());
+            }
+          }
+        } catch (err) {
+          console.log(err, "req error");
+        }
       } else {
         actions.resetForm();
         setMessage("Invalid email or password. Please check and try again.");

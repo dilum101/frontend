@@ -50,12 +50,13 @@ const TokenPageContent = () => {
   const isMobile = useIsMobile();
 
   const appProps = useAppContext();
-
+  const role = sessionStorage.getItem('role');
   const scrollRef = React.useRef<HTMLDivElement>(null);
 
   const hashString = getQueryParamString(router.query.hash);
   const tab = getQueryParamString(router.query.tab);
-  const ownerFilter = getQueryParamString(router.query.holder_address_hash) || undefined;
+  const ownerFilter =
+    getQueryParamString(router.query.holder_address_hash) || undefined;
 
   const queryClient = useQueryClient();
 
@@ -75,27 +76,48 @@ const TokenPageContent = () => {
     },
   });
 
+  useEffect(() => {
+    if (role !== 'admin') {
+      router.push('/404');
+    }
+  }, []);
+
   React.useEffect(() => {
     if (tokenQuery.data && totalSupplySocket) {
-      queryClient.setQueryData(getResourceKey('token', { pathParams: { hash: hashString } }), (prevData: TokenInfo | undefined) => {
-        if (prevData) {
-          return { ...prevData, total_supply: totalSupplySocket.toString() };
-        }
-      });
+      queryClient.setQueryData(
+        getResourceKey('token', { pathParams: { hash: hashString } }),
+        (prevData: TokenInfo | undefined) => {
+          if (prevData) {
+            return { ...prevData, total_supply: totalSupplySocket.toString() };
+          }
+        },
+      );
     }
   }, [ tokenQuery.data, totalSupplySocket, hashString, queryClient ]);
 
-  const handleTotalSupplyMessage: SocketMessage.TokenTotalSupply['handler'] = React.useCallback((payload) => {
-    const prevData = queryClient.getQueryData(getResourceKey('token', { pathParams: { hash: hashString } }));
-    if (!prevData) {
-      setTotalSupplySocket(payload.total_supply);
-    }
-    queryClient.setQueryData(getResourceKey('token', { pathParams: { hash: hashString } }), (prevData: TokenInfo | undefined) => {
-      if (prevData) {
-        return { ...prevData, total_supply: payload.total_supply.toString() };
-      }
-    });
-  }, [ queryClient, hashString ]);
+  const handleTotalSupplyMessage: SocketMessage.TokenTotalSupply['handler'] =
+    React.useCallback(
+      (payload) => {
+        const prevData = queryClient.getQueryData(
+          getResourceKey('token', { pathParams: { hash: hashString } }),
+        );
+        if (!prevData) {
+          setTotalSupplySocket(payload.total_supply);
+        }
+        queryClient.setQueryData(
+          getResourceKey('token', { pathParams: { hash: hashString } }),
+          (prevData: TokenInfo | undefined) => {
+            if (prevData) {
+              return {
+                ...prevData,
+                total_supply: payload.total_supply.toString(),
+              };
+            }
+          },
+        );
+      },
+      [ queryClient, hashString ],
+    );
 
   const enableQuery = React.useCallback(() => setIsQueryEnabled(true), []);
 
@@ -113,12 +135,20 @@ const TokenPageContent = () => {
 
   useEffect(() => {
     if (tokenQuery.data && !tokenQuery.isPlaceholderData) {
-      metadata.update({ pathname: '/token/[hash]', query: { hash: tokenQuery.data.address } }, { symbol: tokenQuery.data.symbol ?? '' });
+      metadata.update(
+        { pathname: '/token/[hash]', query: { hash: tokenQuery.data.address } },
+        { symbol: tokenQuery.data.symbol ?? '' },
+      );
     }
   }, [ tokenQuery.data, tokenQuery.isPlaceholderData ]);
 
-  const hasData = (tokenQuery.data && !tokenQuery.isPlaceholderData) && (contractQuery.data && !contractQuery.isPlaceholderData);
-  const hasInventoryTab = tokenQuery.data?.type === 'ERC-1155' || tokenQuery.data?.type === 'ERC-721';
+  const hasData =
+    tokenQuery.data &&
+    !tokenQuery.isPlaceholderData &&
+    contractQuery.data &&
+    !contractQuery.isPlaceholderData;
+  const hasInventoryTab =
+    tokenQuery.data?.type === 'ERC-1155' || tokenQuery.data?.type === 'ERC-721';
 
   const transfersQuery = useQueryWithPages({
     resourceName: 'token_transfers',
@@ -127,11 +157,8 @@ const TokenPageContent = () => {
     options: {
       enabled: Boolean(
         hasData &&
-        hashString &&
-        (
-          (!hasInventoryTab && !tab) ||
-          tab === 'token_transfers'
-        ),
+          hashString &&
+          ((!hasInventoryTab && !tab) || tab === 'token_transfers'),
       ),
       placeholderData: tokenStubs.getTokenTransfersStub(tokenQuery.data?.type),
     },
@@ -145,13 +172,14 @@ const TokenPageContent = () => {
     options: {
       enabled: Boolean(
         hasData &&
-        hashString &&
-        (
-          (hasInventoryTab && !tab) ||
-          tab === 'inventory'
-        ),
+          hashString &&
+          ((hasInventoryTab && !tab) || tab === 'inventory'),
       ),
-      placeholderData: generateListStub<'token_inventory'>(tokenStubs.TOKEN_INSTANCE, 50, { next_page_params: { unique_token: 1 } }),
+      placeholderData: generateListStub<'token_inventory'>(
+        tokenStubs.TOKEN_INSTANCE,
+        50,
+        { next_page_params: { unique_token: 1 } },
+      ),
     },
   });
 
@@ -162,48 +190,89 @@ const TokenPageContent = () => {
     options: {
       enabled: Boolean(hashString && tab === 'holders' && hasData),
       placeholderData: generateListStub<'token_holders'>(
-        tokenQuery.data?.type === 'ERC-1155' ? tokenStubs.TOKEN_HOLDER_ERC_1155 : tokenStubs.TOKEN_HOLDER_ERC_20, 50, { next_page_params: null }),
+        tokenQuery.data?.type === 'ERC-1155' ?
+          tokenStubs.TOKEN_HOLDER_ERC_1155 :
+          tokenStubs.TOKEN_HOLDER_ERC_20,
+        50,
+        { next_page_params: null },
+      ),
     },
   });
 
   const verifiedInfoQuery = useApiQuery('token_verified_info', {
     pathParams: { hash: hashString, chainId: config.chain.id },
-    queryOptions: { enabled: Boolean(tokenQuery.data) && config.features.verifiedTokens.isEnabled },
+    queryOptions: {
+      enabled:
+        Boolean(tokenQuery.data) && config.features.verifiedTokens.isEnabled,
+    },
   });
 
   const contractTabs = useContractTabs(contractQuery.data);
 
   const tabs: Array<RoutedTab> = [
-    (tokenQuery.data?.type === 'ERC-1155' || tokenQuery.data?.type === 'ERC-721') ? {
-      id: 'inventory',
-      title: 'Inventory',
-      component: <TokenInventory inventoryQuery={ inventoryQuery } tokenQuery={ tokenQuery } ownerFilter={ ownerFilter }/>,
-    } : undefined,
-    { id: 'token_transfers', title: 'Token transfers', component: <TokenTransfer transfersQuery={ transfersQuery } token={ tokenQuery.data }/> },
-    { id: 'holders', title: 'Holders', component: <TokenHolders token={ tokenQuery.data } holdersQuery={ holdersQuery }/> },
-    contractQuery.data?.is_contract ? {
-      id: 'contract',
-      title: () => {
-        if (contractQuery.data?.is_verified) {
-          return (
-            <>
-              <span>Contract</span>
-              <IconSvg name="status/success" boxSize="14px" color="green.500" ml={ 1 }/>
-            </>
-          );
-        }
+    tokenQuery.data?.type === 'ERC-1155' || tokenQuery.data?.type === 'ERC-721' ?
+      {
+        id: 'inventory',
+        title: 'Inventory',
+        component: (
+          <TokenInventory
+            inventoryQuery={ inventoryQuery }
+            tokenQuery={ tokenQuery }
+            ownerFilter={ ownerFilter }
+          />
+        ),
+      } :
+      undefined,
+    {
+      id: 'token_transfers',
+      title: 'Token transfers',
+      component: (
+        <TokenTransfer
+          transfersQuery={ transfersQuery }
+          token={ tokenQuery.data }
+        />
+      ),
+    },
+    {
+      id: 'holders',
+      title: 'Holders',
+      component: (
+        <TokenHolders token={ tokenQuery.data } holdersQuery={ holdersQuery }/>
+      ),
+    },
+    contractQuery.data?.is_contract ?
+      {
+        id: 'contract',
+        title: () => {
+          if (contractQuery.data?.is_verified) {
+            return (
+              <>
+                <span>Contract</span>
+                <IconSvg
+                  name="status/success"
+                  boxSize="14px"
+                  color="green.500"
+                  ml={ 1 }
+                />
+              </>
+            );
+          }
 
-        return 'Contract';
-      },
-      component: <AddressContract tabs={ contractTabs }/>,
-      subTabs: contractTabs.map(tab => tab.id),
-    } : undefined,
+          return 'Contract';
+        },
+        component: <AddressContract tabs={ contractTabs }/>,
+        subTabs: contractTabs.map((tab) => tab.id),
+      } :
+      undefined,
   ].filter(Boolean);
 
   let pagination: PaginationParams | undefined;
 
   // default tab for erc-20 is token transfers
-  if ((tokenQuery.data?.type === 'ERC-20' && !tab) || tab === 'token_transfers') {
+  if (
+    (tokenQuery.data?.type === 'ERC-20' && !tab) ||
+    tab === 'token_transfers'
+  ) {
     pagination = transfersQuery.pagination;
   }
 
@@ -212,27 +281,44 @@ const TokenPageContent = () => {
   }
 
   // default tab for nfts is token inventory
-  if (((tokenQuery.data?.type === 'ERC-1155' || tokenQuery.data?.type === 'ERC-721') && !tab) || tab === 'inventory') {
+  if (
+    ((tokenQuery.data?.type === 'ERC-1155' ||
+      tokenQuery.data?.type === 'ERC-721') &&
+      !tab) ||
+    tab === 'inventory'
+  ) {
     pagination = inventoryQuery.pagination;
   }
 
-  const tokenSymbolText = tokenQuery.data?.symbol ? ` (${ tokenQuery.data.symbol })` : '';
+  const tokenSymbolText = tokenQuery.data?.symbol ?
+    ` (${ tokenQuery.data.symbol })` :
+    '';
 
-  const tabListProps = React.useCallback(({ isSticky, activeTabIndex }: { isSticky: boolean; activeTabIndex: number }) => {
-    if (isMobile) {
-      return { mt: 8 };
-    }
+  const tabListProps = React.useCallback(
+    ({
+      isSticky,
+      activeTabIndex,
+    }: {
+      isSticky: boolean;
+      activeTabIndex: number;
+    }) => {
+      if (isMobile) {
+        return { mt: 8 };
+      }
 
-    return {
-      mt: 3,
-      py: 5,
-      marginBottom: 0,
-      boxShadow: activeTabIndex === 2 && isSticky ? 'action_bar' : 'none',
-    };
-  }, [ isMobile ]);
+      return {
+        mt: 3,
+        py: 5,
+        marginBottom: 0,
+        boxShadow: activeTabIndex === 2 && isSticky ? 'action_bar' : 'none',
+      };
+    },
+    [ isMobile ],
+  );
 
   const backLink = React.useMemo(() => {
-    const hasGoBackLink = appProps.referrer && appProps.referrer.includes('/tokens');
+    const hasGoBackLink =
+      appProps.referrer && appProps.referrer.includes('/tokens');
 
     if (!hasGoBackLink) {
       return;
@@ -247,24 +333,48 @@ const TokenPageContent = () => {
   const titleContentAfter = (
     <>
       { verifiedInfoQuery.data?.tokenAddress && (
-        <Tooltip label={ `Information on this token has been verified by ${ config.chain.name }` }>
+        <Tooltip
+          label={ `Information on this token has been verified by ${ config.chain.name }` }
+        >
           <Box boxSize={ 6 }>
-            <IconSvg name="verified_token" color="green.500" boxSize={ 6 } cursor="pointer"/>
+            <IconSvg
+              name="verified_token"
+              color="green.500"
+              boxSize={ 6 }
+              cursor="pointer"
+            />
           </Box>
         </Tooltip>
       ) }
       <EntityTags
         data={ contractQuery.data }
-        isLoading={ tokenQuery.isPlaceholderData || contractQuery.isPlaceholderData }
+        isLoading={
+          tokenQuery.isPlaceholderData || contractQuery.isPlaceholderData
+        }
         tagsBefore={ [
-          tokenQuery.data ? { label: tokenQuery.data?.type, display_name: tokenQuery.data?.type } : undefined,
+          tokenQuery.data ?
+            {
+              label: tokenQuery.data?.type,
+              display_name: tokenQuery.data?.type,
+            } :
+            undefined,
           config.features.bridgedTokens.isEnabled && tokenQuery.data?.is_bridged ?
-            { label: 'bridged', display_name: 'Bridged', colorScheme: 'blue', variant: 'solid' } :
+            {
+              label: 'bridged',
+              display_name: 'Bridged',
+              colorScheme: 'blue',
+              variant: 'solid',
+            } :
             undefined,
         ] }
         tagsAfter={
           verifiedInfoQuery.data?.projectSector ?
-            [ { label: verifiedInfoQuery.data.projectSector, display_name: verifiedInfoQuery.data.projectSector } ] :
+            [
+              {
+                label: verifiedInfoQuery.data.projectSector,
+                display_name: verifiedInfoQuery.data.projectSector,
+              },
+            ] :
             undefined
         }
         flexGrow={ 1 }
@@ -272,10 +382,18 @@ const TokenPageContent = () => {
     </>
   );
 
-  const isLoading = tokenQuery.isPlaceholderData || contractQuery.isPlaceholderData;
+  const isLoading =
+    tokenQuery.isPlaceholderData || contractQuery.isPlaceholderData;
 
   const titleSecondRow = (
-    <Flex alignItems="center" w="100%" minW={ 0 } columnGap={ 2 } rowGap={ 2 } flexWrap={{ base: 'wrap', lg: 'nowrap' }}>
+    <Flex
+      alignItems="center"
+      w="100%"
+      minW={ 0 }
+      columnGap={ 2 }
+      rowGap={ 2 }
+      flexWrap={{ base: 'wrap', lg: 'nowrap' }}
+    >
       <AddressEntity
         address={{ ...contractQuery.data, name: '' }}
         isLoading={ isLoading }
@@ -283,12 +401,22 @@ const TokenPageContent = () => {
         fontSize="lg"
         fontWeight={ 500 }
       />
-      { !isLoading && tokenQuery.data && <AddressAddToWallet token={ tokenQuery.data } variant="button"/> }
+      { !isLoading && tokenQuery.data && (
+        <AddressAddToWallet token={ tokenQuery.data } variant="button"/>
+      ) }
       <AddressQrCode address={ contractQuery.data } isLoading={ isLoading }/>
       <AccountActionsMenu isLoading={ isLoading }/>
-      <Flex ml={{ base: 0, lg: 'auto' }} columnGap={ 2 } flexGrow={{ base: 1, lg: 0 }}>
+      <Flex
+        ml={{ base: 0, lg: 'auto' }}
+        columnGap={ 2 }
+        flexGrow={{ base: 1, lg: 0 }}
+      >
         <TokenVerifiedInfo verifiedInfoQuery={ verifiedInfoQuery }/>
-        <NetworkExplorers type="token" pathParam={ hashString } ml={{ base: 'auto', lg: 0 }}/>
+        <NetworkExplorers
+          type="token"
+          pathParam={ hashString }
+          ml={{ base: 'auto', lg: 0 }}
+        />
       </Flex>
     </Flex>
   );
@@ -300,13 +428,15 @@ const TokenPageContent = () => {
         title={ `${ tokenQuery.data?.name || 'Unnamed token' }${ tokenSymbolText }` }
         isLoading={ isLoading }
         backLink={ backLink }
-        beforeTitle={ tokenQuery.data ? (
-          <TokenEntity.Icon
-            token={ tokenQuery.data }
-            isLoading={ isLoading }
-            iconSize="lg"
-          />
-        ) : null }
+        beforeTitle={
+          tokenQuery.data ? (
+            <TokenEntity.Icon
+              token={ tokenQuery.data }
+              isLoading={ isLoading }
+              iconSize="lg"
+            />
+          ) : null
+        }
         contentAfter={ titleContentAfter }
         secondRow={ titleSecondRow }
       />
@@ -316,16 +446,20 @@ const TokenPageContent = () => {
       { /* should stay before tabs to scroll up with pagination */ }
       <Box ref={ scrollRef }></Box>
 
-      { isLoading ?
-        <TabsSkeleton tabs={ tabs }/> :
-        (
-          <RoutedTabs
-            tabs={ tabs }
-            tabListProps={ tabListProps }
-            rightSlot={ !isMobile && pagination?.isVisible ? <Pagination { ...pagination }/> : null }
-            stickyEnabled={ !isMobile }
-          />
-        ) }
+      { isLoading ? (
+        <TabsSkeleton tabs={ tabs }/>
+      ) : (
+        <RoutedTabs
+          tabs={ tabs }
+          tabListProps={ tabListProps }
+          rightSlot={
+            !isMobile && pagination?.isVisible ? (
+              <Pagination { ...pagination }/>
+            ) : null
+          }
+          stickyEnabled={ !isMobile }
+        />
+      ) }
     </>
   );
 };

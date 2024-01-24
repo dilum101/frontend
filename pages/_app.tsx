@@ -30,6 +30,7 @@ import {
 
 import "lib/setLocale";
 import Login from "./login";
+import router, { useRouter } from "next/router";
 
 type AppPropsWithLayout = AppProps & {
   Component: NextPageWithLayout;
@@ -61,7 +62,7 @@ function MyApp({ Component, pageProps }: AppPropsWithLayout) {
 
   const handleLogin = () => {
     const JwtToken = sessionStorage.getItem("JwtToken");
-    console.log(JwtToken, "JwtToken");
+
     if (!JwtToken) {
       setIsAuthenticated(false);
     } else {
@@ -86,13 +87,14 @@ function MyApp({ Component, pageProps }: AppPropsWithLayout) {
   };
 
   const handleLogout = () => {
+    router.replace("/");
     sessionStorage.removeItem("JwtToken");
+
     setIsAuthenticated(false);
     setJwtExpired(false);
   };
 
   useEffect(() => {
-    sessionStorage.setItem("role", "user");
     handleLogin();
     setLoading(false);
   }, []);

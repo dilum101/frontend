@@ -1,6 +1,6 @@
 import { Box, Flex, HStack } from '@chakra-ui/react';
 import { useRouter } from 'next/router';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 
 import type { RoutedTab } from 'ui/shared/Tabs/types';
 
@@ -10,6 +10,7 @@ import { useAppContext } from 'lib/contexts/app';
 import useContractTabs from 'lib/hooks/useContractTabs';
 import useIsSafeAddress from 'lib/hooks/useIsSafeAddress';
 import getQueryParamString from 'lib/router/getQueryParamString';
+import { token } from 'mocks/address/address';
 import { ADDRESS_INFO, ADDRESS_TABS_COUNTERS } from 'stubs/address';
 import AddressBlocksValidated from 'ui/address/AddressBlocksValidated';
 import AddressCoinBalance from 'ui/address/AddressCoinBalance';
@@ -35,13 +36,32 @@ import PageTitle from 'ui/shared/Page/PageTitle';
 import RoutedTabs from 'ui/shared/Tabs/RoutedTabs';
 import TabsSkeleton from 'ui/shared/Tabs/TabsSkeleton';
 
-const TOKEN_TABS = [ 'tokens_erc20', 'tokens_nfts', 'tokens_nfts_collection', 'tokens_nfts_list' ];
+const TOKEN_TABS = [
+  'tokens_erc20',
+  'tokens_nfts',
+  'tokens_nfts_collection',
+  'tokens_nfts_list',
+];
 
 const AddressPageContent = () => {
   const router = useRouter();
   const appProps = useAppContext();
-
+  const [ pageValidated, setPageValidate ] = useState(false);
   const tabsScrollRef = React.useRef<HTMLDivElement>(null);
+  const role = sessionStorage.getItem('role');
+  const asset_addresses = sessionStorage.getItem('asset_addresses');
+
+  useEffect(() => {
+    if (
+      asset_addresses?.includes(router.query.hash as string) ||
+      role === 'admin'
+    ) {
+      setPageValidate((prev) => true);
+    } else {
+      router.push('/404');
+    }
+  }, []);
+
   const hash = getQueryParamString(router.query.hash);
 
   const addressQuery = useApiQuery('address', {
@@ -60,7 +80,11 @@ const AddressPageContent = () => {
     },
   });
 
-  const isSafeAddress = useIsSafeAddress(!addressQuery.isPlaceholderData && addressQuery.data?.is_contract ? hash : undefined);
+  const isSafeAddress = useIsSafeAddress(
+    !addressQuery.isPlaceholderData && addressQuery.data?.is_contract ?
+      hash :
+      undefined,
+  );
 
   const contractTabs = useContractTabs(addressQuery.data);
 
@@ -72,7 +96,8 @@ const AddressPageContent = () => {
         count: addressTabsCountersQuery.data?.transactions_count,
         component: <AddressTxs scrollRef={ tabsScrollRef }/>,
       },
-      config.features.beaconChain.isEnabled && addressTabsCountersQuery.data?.withdrawals_count ?
+      config.features.beaconChain.isEnabled &&
+      addressTabsCountersQuery.data?.withdrawals_count ?
         {
           id: 'withdrawals',
           title: 'Withdrawals',
@@ -104,7 +129,8 @@ const AddressPageContent = () => {
         title: 'Coin balance history',
         component: <AddressCoinBalance/>,
       },
-      config.chain.verificationType === 'validation' && addressTabsCountersQuery.data?.validations_count ?
+      config.chain.verificationType === 'validation' &&
+      addressTabsCountersQuery.data?.validations_count ?
         {
           id: 'blocks_validated',
           title: 'Blocks validated',
@@ -120,23 +146,30 @@ const AddressPageContent = () => {
           component: <AddressLogs scrollRef={ tabsScrollRef }/>,
         } :
         undefined,
-      addressQuery.data?.is_contract ? {
-        id: 'contract',
-        title: () => {
-          if (addressQuery.data.is_verified) {
-            return (
-              <>
-                <span>Contract</span>
-                <IconSvg name="status/success" boxSize="14px" color="green.500" ml={ 1 }/>
-              </>
-            );
-          }
+      addressQuery.data?.is_contract ?
+        {
+          id: 'contract',
+          title: () => {
+            if (addressQuery.data.is_verified) {
+              return (
+                <>
+                  <span>Contract</span>
+                  <IconSvg
+                    name="status/success"
+                    boxSize="14px"
+                    color="green.500"
+                    ml={ 1 }
+                  />
+                </>
+              );
+            }
 
-          return 'Contract';
-        },
-        component: <AddressContract tabs={ contractTabs }/>,
-        subTabs: contractTabs.map(tab => tab.id),
-      } : undefined,
+            return 'Contract';
+          },
+          component: <AddressContract tabs={ contractTabs }/>,
+          subTabs: contractTabs.map((tab) => tab.id),
+        } :
+        undefined,
     ].filter(Boolean);
   }, [ addressQuery.data, contractTabs, addressTabsCountersQuery.data ]);
 
@@ -145,18 +178,29 @@ const AddressPageContent = () => {
       data={ addressQuery.data }
       isLoading={ addressQuery.isPlaceholderData }
       tagsBefore={ [
-        !addressQuery.data?.is_contract ? { label: 'eoa', display_name: 'EOA' } : undefined,
-        addressQuery.data?.implementation_address ? { label: 'proxy', display_name: 'Proxy' } : undefined,
-        addressQuery.data?.token ? { label: 'token', display_name: 'Token' } : undefined,
-        isSafeAddress ? { label: 'safe', display_name: 'Multisig: Safe' } : undefined,
+        !addressQuery.data?.is_contract ?
+          { label: 'eoa', display_name: 'EOA' } :
+          undefined,
+        addressQuery.data?.implementation_address ?
+          { label: 'proxy', display_name: 'Proxy' } :
+          undefined,
+        addressQuery.data?.token ?
+          { label: 'token', display_name: 'Token' } :
+          undefined,
+        isSafeAddress ?
+          { label: 'safe', display_name: 'Multisig: Safe' } :
+          undefined,
       ] }
     />
   );
 
-  const content = addressQuery.isError ? null : <RoutedTabs tabs={ tabs } tabListProps={{ mt: 8 }}/>;
+  const content = addressQuery.isError ? null : (
+    <RoutedTabs tabs={ tabs } tabListProps={{ mt: 8 }}/>
+  );
 
   const backLink = React.useMemo(() => {
-    const hasGoBackLink = appProps.referrer && appProps.referrer.includes('/accounts');
+    const hasGoBackLink =
+      appProps.referrer && appProps.referrer.includes('/accounts');
 
     if (!hasGoBackLink) {
       return;
@@ -171,7 +215,13 @@ const AddressPageContent = () => {
   const isLoading = addressQuery.isPlaceholderData;
 
   const titleSecondRow = (
-    <Flex alignItems="center" w="100%" columnGap={ 2 } rowGap={ 2 } flexWrap={{ base: 'wrap', lg: 'nowrap' }}>
+    <Flex
+      alignItems="center"
+      w="100%"
+      columnGap={ 2 }
+      rowGap={ 2 }
+      flexWrap={{ base: 'wrap', lg: 'nowrap' }}
+    >
       <AddressEntity
         address={{ ...addressQuery.data, hash, name: '' }}
         isLoading={ isLoading }
@@ -181,35 +231,61 @@ const AddressPageContent = () => {
         noLink
         isSafeAddress={ isSafeAddress }
       />
-      { !isLoading && addressQuery.data?.is_contract && addressQuery.data.token &&
-        <AddressAddToWallet token={ addressQuery.data.token } variant="button"/> }
-      { !isLoading && !addressQuery.data?.is_contract && config.features.account.isEnabled && (
-        <AddressFavoriteButton hash={ hash } watchListId={ addressQuery.data?.watchlist_address_id }/>
+      { !isLoading &&
+        addressQuery.data?.is_contract &&
+        addressQuery.data.token && (
+        <AddressAddToWallet
+          token={ addressQuery.data.token }
+          variant="button"
+        />
+      ) }
+      { !isLoading &&
+        !addressQuery.data?.is_contract &&
+        config.features.account.isEnabled && (
+        <AddressFavoriteButton
+          hash={ hash }
+          watchListId={ addressQuery.data?.watchlist_address_id }
+        />
       ) }
       <AddressQrCode address={{ hash }} isLoading={ isLoading }/>
       <AccountActionsMenu isLoading={ isLoading }/>
       <HStack ml="auto" gap={ 2 }/>
-      { addressQuery.data?.is_contract && addressQuery.data?.is_verified && config.UI.views.address.solidityscanEnabled && <SolidityscanReport hash={ hash }/> }
+      { addressQuery.data?.is_contract &&
+        addressQuery.data?.is_verified &&
+        config.UI.views.address.solidityscanEnabled && (
+        <SolidityscanReport hash={ hash }/>
+      ) }
       <NetworkExplorers type="address" pathParam={ hash }/>
     </Flex>
   );
 
-  return (
-    <>
-      <TextAd mb={ 6 }/>
-      <PageTitle
-        title={ `${ addressQuery.data?.is_contract ? 'Contract' : 'Address' } details` }
-        backLink={ backLink }
-        contentAfter={ tags }
-        secondRow={ titleSecondRow }
-        isLoading={ isLoading }
-      />
-      <AddressDetails addressQuery={ addressQuery } scrollRef={ tabsScrollRef }/>
-      { /* should stay before tabs to scroll up with pagination */ }
-      <Box ref={ tabsScrollRef }></Box>
-      { (addressQuery.isPlaceholderData || addressTabsCountersQuery.isPlaceholderData) ? <TabsSkeleton tabs={ tabs }/> : content }
-    </>
-  );
+  if (pageValidated) {
+    return (
+      <>
+        <TextAd mb={ 6 }/>
+        <PageTitle
+          title={ `${
+            addressQuery.data?.is_contract ? 'Contract' : 'Address'
+          } details` }
+          backLink={ backLink }
+          contentAfter={ tags }
+          secondRow={ titleSecondRow }
+          isLoading={ isLoading }
+        />
+        <AddressDetails addressQuery={ addressQuery } scrollRef={ tabsScrollRef }/>
+        { /* should stay before tabs to scroll up with pagination */ }
+        <Box ref={ tabsScrollRef }></Box>
+        { addressQuery.isPlaceholderData ||
+        addressTabsCountersQuery.isPlaceholderData ? (
+            <TabsSkeleton tabs={ tabs }/>
+          ) : (
+            content
+          ) }
+      </>
+    );
+  } else {
+    return null;
+  }
 };
 
 export default AddressPageContent;
